@@ -52,7 +52,7 @@ func diff(a, b uint32) int64 { //Сравнение количества пик�
 	return int64(b - a)
 }
 func extCheck(ext []string){
-	if ext[1] != "jpg" || ext[1] != "jpeg" || ext[1] != "png" {
+	if ext[1] != "jpg" && ext[1] != "jpeg" && ext[1] != "png" {
 		log.Printf("Формат " + ext[1] + " не поддерживается")
 		os.Exit(1)
 	}
@@ -136,7 +136,7 @@ func main() {
 
 		amountOfPixels := (b.Max.X - b.Min.X) * (b.Max.Y - b.Min.Y)         //Сколько всего пикселе (по сути площадь кадра)
 		result := float64(sum*100) / (float64(amountOfPixels) * 0xffff * 3) //Превращаем разницу в проценты
-		fmt.Printf("%d and %d Image difference: %f%%\n", i+1, i+2, result)
+		//fmt.Printf("%d and %d Image difference: %f%%\n", i+1, i+2, result)
 
 		if result <= 0.5 { // Если коэф подобия меньше 0.5%
 
@@ -162,6 +162,7 @@ func main() {
 
 			j++
 			dirName = "№" + strconv.Itoa(j) //Поскольку второй кадру отличаектся от первого, то надо создать для него новую диррекеторию
+			fmt.Println("New frame found")
 			err1 := os.Mkdir(outputPath+"/"+dirName, 0750)
 			if err1 != nil && !os.IsExist(err1) {
 				log.Fatal(err1)
