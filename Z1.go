@@ -26,7 +26,7 @@ func main() {
 	dirName := os.Args[2]  //Полный путь к дирректории
 	ext := os.Args[3]      //Расширение кадров
 
-	if ext != "jpg" || ext != "jpeg" || ext != "png" {
+	if ext != "jpg" && ext != "jpeg" && ext != "png" {
 		log.Printf("Формат " + ext + " не поддерживается")
 		os.Exit(1)
 	}
