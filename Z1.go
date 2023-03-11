@@ -26,6 +26,11 @@ func main() {
 	dirName := os.Args[2]  //Полный путь к дирректории
 	ext := os.Args[3]      //Расширение кадров
 
+	if ext != "jpg" || ext != "jpeg" || ext != "png" {
+		log.Printf("Формат " + ext + " не поддерживается")
+		os.Exit(1)
+	}
+
 	s := "ffmpeg -i " + fileName + " image%08d." + ext
 	args := strings.Split(s, " ")
 
@@ -36,21 +41,21 @@ func main() {
 		errCheck(err)
 	}(original)
 	/*
-	file, err := os.Stat(fileName) //Данные о файле
-		if err != nil {
-			errCheck(err)
+		file, err := os.Stat(fileName) //Данные о файле
+			if err != nil {
+				errCheck(err)
+			}
+
+		fileSize := file.Size()        //Размер файла в байтах
+		data := make([]byte, fileSize) //Куда читаем данные
+
+		//Если закидывать сразу размер все может упасть при больших размерах? Поэтому там ниже еще вариант, более похожий на правду
+		n, err := original.Read(data)
+		if err == io.EOF { // если конец файла = конец
+			log.Fatal(err)
 		}
-
-	fileSize := file.Size()        //Размер файла в байтах
-	data := make([]byte, fileSize) //Куда читаем данные
-
-	//Если закидывать сразу размер все может упасть при больших размерах? Поэтому там ниже еще вариант, более похожий на правду
-	n, err := original.Read(data)
-	if err == io.EOF { // если конец файла = конец
-		log.Fatal(err)
-	}
-	_ = n
-*/
+		_ = n
+	*/
 	data := make([]byte, 0) //Куда читаем данные
 	tData := make([]byte, 1024)
 	for { //Цикл считывания байт
