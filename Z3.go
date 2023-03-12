@@ -1,9 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"log"
 	"os"
+	//"github.com/minio/minio-go/v7"
+	//"github.com/minio/minio-go/v7/pkg/credentials"
+)
+
+const (
+	endpoint        = "127.0.0.1:9000"
+	accessKeyID     = "admin"
+	secretAccessKey = "adminadmin"
 )
 
 func errCheck(err error) {
@@ -11,26 +22,29 @@ func errCheck(err error) {
 		log.Fatal(err)
 	}
 }
-func copyPics(amountOfFiles int, files []os.FileInfo, outputDirName string, start int, end int, ch chan string) {
-	//Циклом переносим фото
-	for i := start; i < end; i++ {
-		fileName := files[i].Name()
 
-		oldLocation := "./" + fileName
-		newLocation := outputDirName + "/" + fileName
-		err := os.Rename(oldLocation, newLocation)
-		errCheck(err)
+func copyPics(amountOfFiles int, files []os.FileInfo, ctx context.Context,
+	start int, end int, ch chan string, minioClient *minio.Client, bucketName string) {
+
+	for i := start; i < end; i++ {
+		objectName := files[i].Name()
+		filePath := "./" + files[i].Name()
+
+		info, err := minioClient.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{})
+		if err != nil {
+			log.Fatalln(err)
+		}
+		log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
+
 	}
 	ch <- "Done"
 }
-
 func main() {
-
 	if len(os.Args) != 3 {
-		log.Printf("Необходимо использовать 2 параметра <Полный_путь_к_дирректории_откуда_копируем> <Полный_путь_до_дирректории_куда_копируем>\"")
+		log.Printf("Необходимо использовать 2 параметра <Полный_путь_к_дирректории_откуда_копируем> <название_дирректории_куда_копируем>\"")
 	}
-	dirName := os.Args[1]       //Дирректория с кадрами
-	outputDirName := os.Args[2] //Дирректория куда копируем
+	dirName := os.Args[1]
+	bucketName := os.Args[2]
 
 	err := os.Chdir(dirName) //Переходим в диреркторию с кадрами
 	errCheck(err)
@@ -51,16 +65,23 @@ func main() {
 		fmt.Println("Directory is empty")
 		return
 	}
+	ctx := context.Background()
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+	})
+	errCheck(err)
 
-	err1 := os.Mkdir(outputDirName, 0750) //Пытаемся создать папку для результата
-	if err1 != nil && !os.IsExist(err1) {
-		log.Fatal(err1)
-	}
-	if err1 != nil && os.IsExist(err1) {
-		log.Printf("File " + dirName + " is already exist")
+	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	if err != nil {
+		exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
+		if errBucketExists == nil && exists {
+			log.Printf("Bucket %s is already exist \n", bucketName)
+		} else {
+			log.Fatalln(err)
+		}
 	}
 
-	if amountOfFiles > 100 {
+	if amountOfFiles >= 250 {
 		//Открываем 4 канала
 		ch1 := make(chan string)
 		ch2 := make(chan string)
@@ -68,19 +89,19 @@ func main() {
 		ch4 := make(chan string)
 		var N = amountOfFiles / 4
 		//Запускаем 4 горутины
-		go copyPics(amountOfFiles, files, outputDirName, 0, N, ch1)
-		go copyPics(amountOfFiles, files, outputDirName, N, N*2, ch2)
-		go copyPics(amountOfFiles, files, outputDirName, N*2, N*3, ch3)
-		go copyPics(amountOfFiles, files, outputDirName, N*3, amountOfFiles, ch4)
+		go copyPics(amountOfFiles, files, ctx, 0, N, ch1, minioClient, bucketName)
+		go copyPics(amountOfFiles, files, ctx, N, N*2, ch2, minioClient, bucketName)
+		go copyPics(amountOfFiles, files, ctx, N*2, N*3, ch3, minioClient, bucketName)
+		go copyPics(amountOfFiles, files, ctx, N*3, amountOfFiles, ch4, minioClient, bucketName)
 		//Ждем пока все каналы получат "Done"
 		fmt.Println("First thread:", <-ch1)
 		fmt.Println("Second thread:", <-ch2)
 		fmt.Println("Third thread:", <-ch3)
 		fmt.Println("Fourth thread:", <-ch4)
 	}
-	if amountOfFiles < 100 {
+	if amountOfFiles < 250 {
 		ch := make(chan string)
-		go copyPics(amountOfFiles, files, outputDirName, 0, amountOfFiles, ch)
+		go copyPics(amountOfFiles, files, ctx, 0, amountOfFiles, ch, minioClient, bucketName)
 		fmt.Println(<-ch)
 	}
 
