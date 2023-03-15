@@ -6,7 +6,7 @@ const (
 	endpoint        = "127.0.0.1:9000"
 	accessKeyID     = "admin"
 	secretAccessKey = "adminadmin"
-	objectName      = "VID.mp4"
+	objectName      = "VIDE.mp4"
 )
 
 var input = map[string]string{

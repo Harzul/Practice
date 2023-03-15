@@ -28,10 +28,13 @@ func ParseString(str []byte) error {
 	}
 
 	newStrings := strings.Split(string(str[:]), "\n")
-	SS := strings.Replace(newStrings[0], ",", "", -1)
-	minioStr := strings.Split(SS, " : ")
-	rabbitStr := strings.Split(newStrings[1], " : ")
-
+	S1 := strings.Replace(newStrings[0], ",", "", -1)
+	S1 = strings.Replace(S1, "\"", "", -1)
+	S2 := strings.Replace(newStrings[1], "\"", "", -1)
+	minioStr := strings.Split(S1, " : ")
+	rabbitStr := strings.Split(S2, " : ")
+	minioStr[1] = strings.TrimSpace(minioStr[1])
+	rabbitStr[1] = strings.TrimSpace(rabbitStr[1])
 	if minioStr[0] == "minio_bucket" && rabbitStr[0] == "folder_name" {
 		input[minioStr[0]] = minioStr[1]
 		input[rabbitStr[0]] = rabbitStr[1]

@@ -25,23 +25,30 @@ func main() {
 
 			str := message.Body
 			err := ParseString(str)
-
 			if err != nil {
 				log.Println(">>>>>>>>>> ", err)
 				continue
 			}
 
-			bucketName := "video" ///Пофиксить пробел в конце/начале
-			folderName := input["fodler_name"]
+			bucketName := input["minio_bucket"]
+			folderName := input["folder_name"]
 
-			DownloadVideo(minioClient, minCtx, bucketName, folderName)
+			err = DownloadVideo(minioClient, minCtx, bucketName, folderName)
+			if err != nil {
+				log.Println(">>>>>>>>>> ", err)
+				continue
+			}
 			RunFfmpeg()
 			files, amountOfFiles := GetDirInfo()
 
 			output["minio_bucket"] = "frames"
 			output["folder_name"] = "uniqueframes" + strconv.Itoa(counter)
 
-			CreateNewBucket(minioClient, minCtx, output["minio_bucket"])
+			err = CreateNewBucket(minioClient, minCtx, output["minio_bucket"])
+			if err != nil {
+				log.Println(">>>>>>>>>> ", err)
+				continue
+			}
 			ImageCompare(amountOfFiles, files, minioClient, minCtx, output["minio_bucket"], output["folder_name"])
 			body := "minio_bucket : " + output["minio_bucket"] + ",\n" + "folder_name : " + output["folder_name"]
 
