@@ -88,13 +88,13 @@ func ImageCompare(amountOfFiles int, files []os.FileInfo, minioClient *minio.Cli
 				break
 			}
 			if i == 0 {
-				_, err := minioClient.FPutObject(ctx, bucketName, name1, "./"+name1, minio.PutObjectOptions{})
+				_, err := minioClient.FPutObject(ctx, bucketName, folderName+"/"+name1, "./"+name1, minio.PutObjectOptions{})
 				if err != nil {
 					log.Fatalln(err)
 				}
 			}
 		} else {
-			_, err := minioClient.FPutObject(ctx, bucketName, name2, "./"+name2, minio.PutObjectOptions{})
+			_, err := minioClient.FPutObject(ctx, bucketName, folderName+"/"+name2, "./"+name2, minio.PutObjectOptions{})
 			if err != nil {
 				log.Fatalln(err)
 			}
