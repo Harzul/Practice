@@ -18,8 +18,8 @@ func (m *Minio) Connect() {
 	(*m).client = client
 }
 
-func (m *Minio) DownloadVideo(bucketName string, folderName string) error {
-	err := (*m).client.FGetObject((*m).ctx, bucketName, folderName+"/"+objectName, "./temp/temp.mp4", minio.GetObjectOptions{})
+func (m Minio) DownloadVideo(bucketName string, folderName string) error {
+	err := m.client.FGetObject(m.ctx, bucketName, folderName+"/"+objectName, "./temp/temp.mp4", minio.GetObjectOptions{})
 	if err != nil {
 		return errors.New("can't get file, no such directory")
 	}
@@ -38,10 +38,10 @@ func (m *Minio) DownloadVideo(bucketName string, folderName string) error {
 	}
 	return nil
 }
-func (m *Minio) CreateNewBucket(bucketName string) error {
-	err := (*m).client.MakeBucket((*m).ctx, bucketName, minio.MakeBucketOptions{})
+func (m Minio) CreateNewBucket(bucketName string) error {
+	err := m.client.MakeBucket(m.ctx, bucketName, minio.MakeBucketOptions{})
 	if err != nil {
-		exists, errBucketExists := (*m).client.BucketExists((*m).ctx, bucketName)
+		exists, errBucketExists := m.client.BucketExists(m.ctx, bucketName)
 		if errBucketExists == nil && exists {
 			log.Printf("Bucket %s is already exist \n", bucketName)
 		} else {

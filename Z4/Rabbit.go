@@ -23,7 +23,7 @@ func (r *Rabbit) RabbitConnect() {
 
 }
 
-func (r *Rabbit) CreateConsumer() <-chan amqp.Delivery {
+func (r Rabbit) CreateConsumer() <-chan amqp.Delivery {
 	messages, err := r.ch.Consume( //Поставщик
 		InputQueueName, // queue
 		"",             // consumer
@@ -43,8 +43,8 @@ func (r *Rabbit) RabCtxDefine() {
 	defer cancel()
 	(*r).ctx = ctx
 }
-func (r *Rabbit) SendMessage(data []byte) {
-	err := (*r).ch.PublishWithContext((*r).ctx,
+func (r Rabbit) SendMessage(data []byte) {
+	err := r.ch.PublishWithContext(r.ctx,
 		"",     // exchange
 		"Done", // routing key
 		false,  // mandatory
