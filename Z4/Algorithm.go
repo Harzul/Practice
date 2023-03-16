@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"github.com/minio/minio-go/v7"
 	"github.com/vitali-fedulov/images4"
 	"log"
@@ -21,29 +20,7 @@ func GetPwd() string {
 	errCheck(err)
 	return pwd
 }
-func ParseString(str []byte) error {
-	strSpace := strings.Split(string(str), " ")
-	if len(strSpace) != 5 {
-		return errors.New("wrong Input1")
-	}
 
-	newStrings := strings.Split(string(str[:]), "\n")
-	S1 := strings.Replace(newStrings[0], ",", "", -1)
-	S1 = strings.Replace(S1, "\"", "", -1)
-	S2 := strings.Replace(newStrings[1], "\"", "", -1)
-	minioStr := strings.Split(S1, " : ")
-	rabbitStr := strings.Split(S2, " : ")
-	minioStr[1] = strings.TrimSpace(minioStr[1])
-	rabbitStr[1] = strings.TrimSpace(rabbitStr[1])
-	if minioStr[0] == "minio_bucket" && rabbitStr[0] == "folder_name" {
-		input[minioStr[0]] = minioStr[1]
-		input[rabbitStr[0]] = rabbitStr[1]
-
-		return nil
-	}
-
-	return errors.New("wrong Input2")
-}
 func RunFfmpeg() {
 	s := "ffmpeg -i " + "temp.mp4" + " image%08d.jpg"
 	args := strings.Split(s, " ")
@@ -54,8 +31,8 @@ func RunFfmpeg() {
 		log.Printf("Running ffmpeg failed: %v", err)
 	}
 
-	err4 := os.Remove("temp.mp4") //удаляем копию видео
-	errCheck(err4)
+	err = os.Remove("temp.mp4") //удаляем копию видео
+	errCheck(err)
 }
 
 func GetDirInfo() ([]os.FileInfo, int) {

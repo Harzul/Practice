@@ -1,39 +1,37 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 )
 
 func main() {
-	minioClient, minCtx := MinioConnect()
-	ch, conn := RabbitConnect()
-	defer func() {
+	m := Minio{}
+	m.Connect()
+	r := Rabbit{}
+	r.RabbitConnect()
+
+	/*defer func() {
 		_ = ch.Close()
 		_ = conn.Close()
 	}()
-
+	*/
 	pwd := GetPwd()
-	messages := CreateConsumer(ch)
+	messages := r.CreateConsumer()
 
-	var forever chan struct{}
-	var counter = 0
 	go func() {
-		rabCtx := RabCtxDefine()
-
+		r.RabCtxDefine()
 		for message := range messages {
-
 			str := message.Body
-			err := ParseString(str)
+
+			err := json.Unmarshal(str, &Input)
 			if err != nil {
 				log.Println(">>>>>>>>>> ", err)
 				continue
 			}
 
-			bucketName := input["minio_bucket"]
-			folderName := input["folder_name"]
-
-			err = DownloadVideo(minioClient, minCtx, bucketName, folderName)
+			err = m.DownloadVideo(Input.MinioBucket, Input.FolderName)
 			if err != nil {
 				log.Println(">>>>>>>>>> ", err)
 				continue
@@ -41,23 +39,26 @@ func main() {
 			RunFfmpeg()
 			files, amountOfFiles := GetDirInfo()
 
-			output["minio_bucket"] = goalBucket
-			output["folder_name"] = folder + strconv.Itoa(counter)
+			Output := Data{goalBucket, folder + strconv.Itoa(counter)}
 
-			err = CreateNewBucket(minioClient, minCtx, output["minio_bucket"])
+			err = m.CreateNewBucket(Output.MinioBucket)
 			if err != nil {
 				log.Println(">>>>>>>>>> ", err)
 				continue
 			}
-			ImageCompare(amountOfFiles, files, minioClient, minCtx, output["minio_bucket"], output["folder_name"])
-			body := "minio_bucket : " + output["minio_bucket"] + ",\n" + "folder_name : " + output["folder_name"]
+			ImageCompare(amountOfFiles, files, m.client, m.ctx, Output.MinioBucket, Output.FolderName)
 
-			SendMessage(ch, rabCtx, body)
+			data, err := json.Marshal(Output)
+			if err != nil {
+				log.Println(">>>>>>>>>> ", err)
+				continue
+			}
+
+			r.SendMessage(data)
 			clear(pwd)
 			counter++
 		}
 
 	}()
 	<-forever
-
 }

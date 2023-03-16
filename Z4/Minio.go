@@ -9,17 +9,17 @@ import (
 	"os"
 )
 
-func MinioConnect() (*minio.Client, context.Context) {
-	ctx := context.Background()
-	minioClient, err := minio.New(endpoint, &minio.Options{
+func (m *Minio) Connect() {
+	(*m).ctx = context.Background()
+	client, err := minio.New(endpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
 	})
 	errCheck(err)
-	return minioClient, ctx
+	(*m).client = client
 }
 
-func DownloadVideo(minioClient *minio.Client, ctx context.Context, bucketName string, folderName string) error {
-	err := minioClient.FGetObject(ctx, bucketName, folderName+"/"+objectName, "./temp/temp.mp4", minio.GetObjectOptions{})
+func (m *Minio) DownloadVideo(bucketName string, folderName string) error {
+	err := (*m).client.FGetObject((*m).ctx, bucketName, folderName+"/"+objectName, "./temp/temp.mp4", minio.GetObjectOptions{})
 	if err != nil {
 		return errors.New("can't get file, no such directory")
 	}
@@ -38,10 +38,10 @@ func DownloadVideo(minioClient *minio.Client, ctx context.Context, bucketName st
 	}
 	return nil
 }
-func CreateNewBucket(minioClient *minio.Client, ctx context.Context, bucketName string) error {
-	err := minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+func (m *Minio) CreateNewBucket(bucketName string) error {
+	err := (*m).client.MakeBucket((*m).ctx, bucketName, minio.MakeBucketOptions{})
 	if err != nil {
-		exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
+		exists, errBucketExists := (*m).client.BucketExists((*m).ctx, bucketName)
 		if errBucketExists == nil && exists {
 			log.Printf("Bucket %s is already exist \n", bucketName)
 		} else {

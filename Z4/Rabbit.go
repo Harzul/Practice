@@ -8,21 +8,23 @@ import (
 	"time"
 )
 
-func RabbitConnect() (*amqp.Channel, *amqp.Connection) {
+func (r *Rabbit) RabbitConnect() {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		log.Fatalf("unable to open connect to RabbitMQ server. Error: %s", err)
 	}
+	(*r).conn = conn
 
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("failed to open a channel. Error: %s", err)
 	}
+	(*r).ch = ch
 
-	return ch, conn
 }
-func CreateConsumer(ch *amqp.Channel) <-chan amqp.Delivery {
-	messages, err := ch.Consume( //Поставщик
+
+func (r *Rabbit) CreateConsumer() <-chan amqp.Delivery {
+	messages, err := r.ch.Consume( //Поставщик
 		InputQueueName, // queue
 		"",             // consumer
 		true,           // auto-ack
@@ -36,20 +38,20 @@ func CreateConsumer(ch *amqp.Channel) <-chan amqp.Delivery {
 	}
 	return messages
 }
-func RabCtxDefine() context.Context {
+func (r *Rabbit) RabCtxDefine() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return ctx
+	(*r).ctx = ctx
 }
-func SendMessage(ch *amqp.Channel, ctx context.Context, body string) {
-	err := ch.PublishWithContext(ctx,
+func (r *Rabbit) SendMessage(data []byte) {
+	err := (*r).ch.PublishWithContext((*r).ctx,
 		"",     // exchange
 		"Done", // routing key
 		false,  // mandatory
 		false,  // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(body),
+			Body:        data,
 		})
 	if err != nil {
 		log.Fatalf("failed to publish a message. Error: %s", err)
