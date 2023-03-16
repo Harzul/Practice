@@ -41,8 +41,8 @@ func main() {
 			RunFfmpeg()
 			files, amountOfFiles := GetDirInfo()
 
-			output["minio_bucket"] = "frames"
-			output["folder_name"] = "uniqueframes" + strconv.Itoa(counter)
+			output["minio_bucket"] = goalBucket
+			output["folder_name"] = folder + strconv.Itoa(counter)
 
 			err = CreateNewBucket(minioClient, minCtx, output["minio_bucket"])
 			if err != nil {
